@@ -2,6 +2,9 @@ import {ApiError} from "../../../Videotube/Server/src/utils/ApiError";
 import {User} from "../models/user.model";
 import {asyncHandler} from "../utils/asynHandler";
 import {registerUserSchema} from "../validation/user.validation";
+import zod from zod;
+import {ApiResponse} from"../utils/ApiResponse.js"
+
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -89,7 +92,50 @@ const signin = asyncHandler(async (req, res) => {
     );
 });
 
+const updateInformation = asyncHandler(async (req,res) => {
+    const updateBody = zod.object({
+        password: zod.string().optional(),
+        firstName: zod.string().optional(),
+        LastName: zod.string().optional()
+    })
+
+    const {success} = updateBody.safeParse(req.body)
+    if(!success){
+        throw new ApiError(411, "Error while updating information")
+    }
+
+    const user = await User.updateOne({_id: req.userId} ,req.body);
+
+    return res.status(201).json(new ApiResponse(200, user, "User updated successfully"))
+})
+
+const getUsers = asyncHandler(async (req,res) => {
+    const filter = req.query.filter || "";
+    const users = await User.find({
+        $or: [{
+            firstName: {
+                "$regex": filter
+            }
+        },{
+            email:{
+                "$regex": filter    
+            }
+        }]
+    })
+
+    res.json({
+        user: users.map(user => ({
+            username: user.username,
+            fullname: user.fullName,
+            email: user.email,
+            _id: user._id
+        }))
+    })
+})
+
 export {
     signup,
-    signin
+    signin,
+    updateInformation,
+    getUsers,
 }
