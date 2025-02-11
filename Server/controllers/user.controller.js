@@ -37,14 +37,32 @@ const signup = asyncHandler(async (req, res) => {
         throw new ApiError(409, "Email or username already exists");
     }
 
-    const user = await User.create(username, email, fullname, password);
+    const user = await User.create({
+        username: req.body.username,
+        password: req.body.password,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+    })
+    const userId = user._id;
+
+    await Account.create({
+        userId,
+        balance: 1 + Math.random() * 10000
+    })
+
+    const token = jwt.sign({
+        userId
+    }, JWT_SECRET);
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
     if (!createdUser) {
         throw new ApiError(500, "something went wrong while registering the user");
     }
 
-    return res.status(201).json(new ApiResponse(200, createduser, "User registered sucessfully"));
+    res.json({
+        message: "User created successfully",
+        token: token
+    })
 });
 
 const signin = asyncHandler(async (req, res) => {

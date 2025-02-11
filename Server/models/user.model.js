@@ -41,6 +41,18 @@ const userSchema = new Schema(
     }
 );
 
+const accountSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId, // Reference to User model
+        ref: 'User',
+        required: true
+    },
+    balance: {
+        type: Number,
+        required: true
+    }
+});
+
 
 userSchema.pre("save" , async function(next) {
     if(!this.isModified("password")){
@@ -78,4 +90,7 @@ userSchema.methods.generateRefreshToken = async function(){
         }
     )
 }
-export const User = mongoose.model("User", userSchema)
+const Account = mongoose.model('Account', accountSchema);
+const User = mongoose.model("User", userSchema)
+
+export {Account , User }

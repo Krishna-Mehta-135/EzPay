@@ -13,4 +13,4 @@ router.route("/update-info").put(authMiddleware, updateInformation)
 router.route("/bulk").get(authMiddleware, getUsers)
 
 
-export default router
+export default userRouter

@@ -1,6 +1,7 @@
 import { express } from 'express';
-import { router } from './routers/user.routes.js'
+import userRouter from './routers/user.routes.js'
 import { cors } from 'cors';
+import { accountRouter } from './routers/account.routes.js';
 
 const app = express()
 
@@ -11,6 +12,7 @@ app.use(cors({
 
 app.use(express.json())
 
-app.use('/api/vi/user', router)
+app.use('/api/v1/user', userRouter)
+app.use('/api/v1/account', accountRouter)
 
 export {app}    
