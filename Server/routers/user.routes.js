@@ -1,16 +1,16 @@
-import { getUsers, signin, signup, updateInformation } from "../controllers/user.controller";
+import { getUsers, signin, signup, updateInformation } from "../controllers/user.controller.js";
 import {authMiddleware} from "../middlewares/authMiddleware.js"
-import {Router} from express;
+import {Router} from "express";
 
-const router = Router()
+const userRouter = Router()
 
-router.route("/signup").post(signup)
+userRouter.route("/signup").post(signup)
 
-router.route("/signin").get(signin)
+userRouter.route("/signin").get(signin)
 
-router.route("/update-info").put(authMiddleware, updateInformation)
+userRouter.route("/update-info").put(authMiddleware, updateInformation)
 
-router.route("/bulk").get(authMiddleware, getUsers)
+userRouter.route("/bulk").get(authMiddleware, getUsers)
 
 
 export default userRouter
