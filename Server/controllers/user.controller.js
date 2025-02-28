@@ -22,9 +22,13 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const signup = asyncHandler(async (req, res) => {
-    const {username, email, fullname, password} = req.body;
+    const {username, email, fullName, password} = req.body;
+    console.log(req.body);
+    
 
     const validationResult = registerUserSchema.safeParse(req.body);
+    console.log(validationResult);
+    
     //validationResult .success property is coming from zod instead of apiError . When we safeparse zod gives an object with success true or false
     if (!validationResult.success) {
         return res.status(400).json({errors: validationResult.error.issues});
@@ -33,6 +37,7 @@ const signup = asyncHandler(async (req, res) => {
     const existingUser = await User.findOne({
         $or: [{username}, {email}],
     });
+
     if (existingUser) {
         throw new ApiError(409, "Email or username already exists");
     }
@@ -40,8 +45,8 @@ const signup = asyncHandler(async (req, res) => {
     const user = await User.create({
         username: req.body.username,
         password: req.body.password,
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
+        email: req.body.email,
+        fullName: req.body.fullName
     })
     const userId = user._id;
 
@@ -144,7 +149,7 @@ const getUsers = asyncHandler(async (req,res) => {
     res.json({
         user: users.map(user => ({
             username: user.username,
-            fullname: user.fullName,
+            fullName: user.fullName,
             email: user.email,
             _id: user._id
         }))

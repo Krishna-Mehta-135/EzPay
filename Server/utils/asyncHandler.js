@@ -1,10 +1,12 @@
-export const asyncHandler = (requestHandler) => async (req,res,next) =>{
+export const asyncHandler = (requestHandler) => async (req, res, next) => {
     try {
-        await requestHandler(req,res,next)
+        await requestHandler(req, res, next);
     } catch (error) {
-        res.status(error.code || 500).json({
+        console.error("Error in asyncHandler:", error);
+
+        res.status(error.statusCode && error.statusCode >= 100 && error.statusCode < 600 ? error.statusCode : 500).json({
             success: false,
-            message: error.message
-        })
+            message: error.message || "Internal Server Error",
+        });
     }
-}
+};
