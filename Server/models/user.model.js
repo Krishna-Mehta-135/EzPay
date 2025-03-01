@@ -1,5 +1,5 @@
 import mongoose, {Schema} from "mongoose";
-import bcrypt from 'bcrypt'
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
@@ -44,27 +44,33 @@ const userSchema = new Schema(
 const accountSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId, // Reference to User model
-        ref: 'User',
-        required: true
+        ref: "User",
+        required: true,
     },
     balance: {
         type: Number,
-        required: true
-    }
+        required: true,
+    },
 });
 
+userSchema.pre("save", async function (next) {
+    console.log("🔥 Running pre-save middleware"); // 🔍 Debug log
 
-userSchema.pre("save" , async function(next) {
-    if(!this.isModified("password")){
-        this.password = await bcrypt.hash(this.password, 10);
+    if (!this.isModified("password")) {
+        return next(); // ✅ Ensures hashing doesn't run twice
     }
-})
 
-userSchema.methods.isPasswordCorrect = async function(password) {
-    return await bcrypt.compare(password, this.password)
-}
+    this.password = await bcrypt.hash(this.password, 10);
 
-userSchema.methods.generateAccessToken = async function(){
+    next();
+});
+
+userSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.password);
+};
+
+userSchema.methods.generateAccessToken = async function () {
+    console.log("✅ JWT Secret at Token Generation:", process.env.JWT_SECRET);
     return jwt.sign(
         {
             _id: this._id,
@@ -72,25 +78,27 @@ userSchema.methods.generateAccessToken = async function(){
             username: this.username,
             fullName: this.fullName,
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.JWT_SECRET, // Ensure this is the same as in middleware
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
         }
-    )
-}
+    );
+};
 
-userSchema.methods.generateRefreshToken = async function(){
+
+
+userSchema.methods.generateRefreshToken = async function () {
     return jwt.sign(
         {
             _id: this._id,
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
         }
-    )
-}
-const Account = mongoose.model('Account', accountSchema);
-const User = mongoose.model("User", userSchema)
+    );
+};
+const Account = mongoose.model("Account", accountSchema);
+const User = mongoose.model("User", userSchema);
 
-export {Account , User }
+export {Account, User};
