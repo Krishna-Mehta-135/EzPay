@@ -4,7 +4,9 @@ import {asyncHandler} from "../utils/asyncHandler.js";
 import {registerUserSchema} from "../validation/user.validation.js";
 import zod from "zod";
 import {ApiResponse} from "../utils/ApiResponse.js";
-import bcrypt from "bcrypt";
+import { Account } from "../models/user.model.js";
+import jwt from "jsonwebtoken"
+
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -29,10 +31,8 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const signup = asyncHandler(async (req, res) => {
     const {username, email, fullName, password} = req.body;
-    console.log(req.body);
 
     const validationResult = registerUserSchema.safeParse(req.body);
-    console.log(validationResult);
 
     //validationResult .success property is coming from zod instead of apiError . When we safeparse zod gives an object with success true or false
     if (!validationResult.success) {
@@ -55,16 +55,19 @@ const signup = asyncHandler(async (req, res) => {
     });
     const userId = user._id;
 
-    await Account.create({
+    //Create new account for the user
+    const account = await Account.create({
         userId,
         balance: 1 + Math.random() * 10000,
     });
+
+    console.log("Created Account:", account);
 
     const token = jwt.sign(
         {
             userId,
         },
-        JWT_SECRET
+        process.env.JWT_SECRET
     );
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");

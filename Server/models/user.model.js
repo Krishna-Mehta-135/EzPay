@@ -54,8 +54,6 @@ const accountSchema = new mongoose.Schema({
 });
 
 userSchema.pre("save", async function (next) {
-    console.log("🔥 Running pre-save middleware"); // 🔍 Debug log
-
     if (!this.isModified("password")) {
         return next(); // ✅ Ensures hashing doesn't run twice
     }
@@ -70,7 +68,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 };
 
 userSchema.methods.generateAccessToken = async function () {
-    console.log("✅ JWT Secret at Token Generation:", process.env.JWT_SECRET);
+    
     return jwt.sign(
         {
             _id: this._id,

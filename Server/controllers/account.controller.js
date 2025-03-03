@@ -5,9 +5,18 @@ import {Account} from "../models/user.model.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 
 const accountBalance = asyncHandler(async (req, res) => {
+    console.log(req.userId);
+    
     const account = await Account.findOne({
         userId: req.userId,
     });
+
+    if (!account) {
+        return res.status(404).json({ error: "Account not found" });
+    }
+    
+    console.log(account);
+    
     res.json({
         balance: account.balance,
     });
