@@ -2,8 +2,7 @@ import {Heading} from "../components/Heading.jsx";
 import {SubHeading} from "./../components/SubHeading.jsx";
 import {InputBox} from "../components/InputBox.jsx";
 import {Button} from "./../components/Button.jsx";
-import { BottomWarning } from './../components/BottomWarning';
-
+import {BottomWarning} from "./../components/BottomWarning.jsx";
 
 const Signup = () => {
     return (
