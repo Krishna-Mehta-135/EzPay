@@ -8,6 +8,7 @@ export const Appbar = () => {
                     <div className="flex flex-col justify-center h-full text-xl">U</div>
                 </div>
             </div>
+            
         </div>
     );
 };
