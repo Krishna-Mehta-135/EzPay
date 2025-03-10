@@ -22,12 +22,12 @@ const Signup = () => {
                 fullName,
                 password
             });
-            console.log("Signup successful:", response.data);
+            localStorage.setItem("accessToken" , response.data.accessToken)
 
             // Redirect to login or home page after successful signup
             navigate("/signin");
         } catch (error) {
-            console.error("Signup failed:", error.response?.data || error.message);
+            console.error("Signup failed:", error.response ? error.response.data : error.message);
         }
     };
 

@@ -4,9 +4,8 @@ import {asyncHandler} from "../utils/asyncHandler.js";
 import {registerUserSchema} from "../validation/user.validation.js";
 import zod from "zod";
 import {ApiResponse} from "../utils/ApiResponse.js";
-import { Account } from "../models/user.model.js";
-import jwt from "jsonwebtoken"
-
+import {Account} from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -15,9 +14,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
         const accessToken = await user.generateAccessToken();
         const refreshToken = await user.generateRefreshToken();
-
-        console.log("JWT Secret in Token Generation:", process.env.JWT_SECRET);
-
 
         user.refreshToken = refreshToken;
         await user.save({validateBeforeSave: false});
@@ -31,8 +27,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const signup = asyncHandler(async (req, res) => {
     const {username, email, fullName, password} = req.body;
-    console.log(username);
-    
+
     const validationResult = registerUserSchema.safeParse(req.body);
 
     //validationResult .success property is coming from zod instead of apiError . When we safeparse zod gives an object with success true or false
@@ -62,28 +57,29 @@ const signup = asyncHandler(async (req, res) => {
         balance: 1 + Math.random() * 10000,
     });
 
-    console.log("Created Account:", account);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
-    const token = jwt.sign(
-        {
-            userId,
-        },
-        process.env.JWT_SECRET
-    );
+    res.cookie("refreshToken", refreshToken, {
+        httpOnly: true, // Prevents JavaScript access
+        secure: true,   // Works only on HTTPS (set to false in development)
+        sameSite: "Strict", // Helps prevent CSRF attacks
+    });
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
     if (!createdUser) {
         throw new ApiError(500, "something went wrong while registering the user");
     }
 
-    res.json({
+    res.status(201).json({
         message: "User created successfully",
-        token: token,
+        user: createdUser,
+        accessToken,
     });
+    
 });
 
 const signin = asyncHandler(async (req, res) => {
-    const { email, username, password } = req.body;
+    const {email, username, password} = req.body;
 
     if (!(username || email)) {
         throw new ApiError(400, "Username or email is required to login");
@@ -94,7 +90,7 @@ const signin = asyncHandler(async (req, res) => {
 
     // Find user by email or username
     const user = await User.findOne({
-        $or: [{ username }, { email }],
+        $or: [{username}, {email}],
     });
 
     // If user does not exist
@@ -109,7 +105,7 @@ const signin = asyncHandler(async (req, res) => {
     }
 
     // Generate access and refresh tokens
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
 
     // Get user details without sensitive fields
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
@@ -123,16 +119,21 @@ const signin = asyncHandler(async (req, res) => {
     };
 
     return res
-        .status(200)
-        .cookie("accessToken", accessToken, cookieOptions)
-        .cookie("refreshToken", refreshToken, cookieOptions)
-        .json(new ApiResponse(200, {
-            user: loggedInUser,
-            accessToken,
-            refreshToken,
-        }, "User logged in successfully"));
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken,
+                refreshToken,
+            },
+            "User logged in successfully"
+        )
+    );
 });
-
 
 const updateInformation = asyncHandler(async (req, res) => {
     const updateBody = zod.object({
