@@ -5,18 +5,14 @@ import {Account} from "../models/user.model.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 
 const accountBalance = asyncHandler(async (req, res) => {
-    console.log(req.userId);
-    
     const account = await Account.findOne({
         userId: req.userId,
     });
 
     if (!account) {
-        return res.status(404).json({ error: "Account not found" });
+        return res.status(404).json({error: "Account not found"});
     }
-    
-    console.log(account);
-    
+
     res.json({
         balance: account.balance,
     });
@@ -50,7 +46,6 @@ const transferMoney = asyncHandler(async (req, res) => {
 
         await session.commitTransaction();
         return res.json(new ApiResponse(200, "Transfer Successfull"));
-        
     } catch (error) {
         await Account.updateOne({userId: req.userId}, {$inc: {balance: -amount}}, {session});
         await Account.updateOne({userId: to}, {$inc: {balance: amount}}, {session});

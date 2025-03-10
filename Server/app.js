@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import userRouter from './routers/user.routes.js'
 import cors from 'cors';

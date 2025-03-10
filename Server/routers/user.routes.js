@@ -6,7 +6,7 @@ const userRouter = Router()
 
 userRouter.route("/signup").post(signup)
 
-userRouter.route("/signin").get(signin)
+userRouter.route("/signin").post(signin)
 
 userRouter.route("/update-info").put(authMiddleware, updateInformation)
 

@@ -31,7 +31,8 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const signup = asyncHandler(async (req, res) => {
     const {username, email, fullName, password} = req.body;
-
+    console.log(username);
+    
     const validationResult = registerUserSchema.safeParse(req.body);
 
     //validationResult .success property is coming from zod instead of apiError . When we safeparse zod gives an object with success true or false
@@ -82,53 +83,56 @@ const signup = asyncHandler(async (req, res) => {
 });
 
 const signin = asyncHandler(async (req, res) => {
-    const {email, username, password} = req.body;
+    const { email, username, password } = req.body;
 
     if (!(username || email)) {
-        throw new ApiError(400, "username or email  are required to login");
+        throw new ApiError(400, "Username or email is required to login");
     }
     if (!password) {
         throw new ApiError(400, "Password is required to login");
     }
 
+    // Find user by email or username
     const user = await User.findOne({
-        $or: [{username}, {email}],
+        $or: [{ username }, { email }],
     });
 
-    const isPasswordValid = await user.isPasswordCorrect(password);
-    console.log(isPasswordValid);
-
-    if (!isPasswordValid) {
-        throw new ApiError(404, "Password is incorrect");
+    // If user does not exist
+    if (!user) {
+        throw new ApiError(400, "Invalid username or email");
     }
-    //access and refresh token
-    const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
-    console.log(accessToken);
-    console.log(refreshToken);
 
+    // Validate password
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+        throw new ApiError(400, "Incorrect password");
+    }
+
+    // Generate access and refresh tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+    // Get user details without sensitive fields
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
-    const options = {
+    // Cookie options
+    const isProduction = process.env.NODE_ENV === "production";
+    const cookieOptions = {
         httpOnly: true,
-        secure: true,
+        secure: isProduction, // Only secure in production
+        sameSite: "Strict",
     };
 
     return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(
-            200,
-            {
-                user: loggedInUser,
-                accessToken,
-                refreshToken,
-            },
-            "User logged in successfully"
-        )
-    );
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(new ApiResponse(200, {
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+        }, "User logged in successfully"));
 });
+
 
 const updateInformation = asyncHandler(async (req, res) => {
     const updateBody = zod.object({
