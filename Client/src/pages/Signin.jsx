@@ -4,27 +4,34 @@ import {InputBox} from "../components/InputBox.jsx";
 import {Button} from "../components/Button.jsx";
 import {BottomWarning} from "../components/BottomWarning";
 import {useState} from "react";
-import validator from "validator"; // Import validator.js
+import {useNavigate} from "react-router-dom"; // Import useNavigate
+import validator from "validator";
 import axios from "axios";
 
 const Signin = () => {
-    const [identifier, setIdentifier] = useState(""); // Accepts email or username
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
+    const [accessToken, setAccessToken] = useState(null);
+    const navigate = useNavigate();
 
     const handleLogin = async () => {
-        // Determine if input is an email
         const isEmail = validator.isEmail(identifier);
 
         try {
-            const response = await axios.post("http://localhost:8000/api/v1/user/signin", {
-                email: isEmail ? identifier : undefined,
-                username: isEmail ? undefined : identifier,
-                password,
-            });
+            const response = await axios.post(
+                "http://localhost:8000/api/v1/user/signin",
+                {
+                    email: isEmail ? identifier : undefined,
+                    username: isEmail ? undefined : identifier,
+                    password,
+                },
+                {withCredentials: true} // Ensures cookies are sent and received
+            );
 
-            console.log("Login Successful", response.data);
+            setAccessToken(response.data.data.accessToken); // Store access token in state
+            navigate("/dashboard");
         } catch (error) {
-            console.error("Login Failed:", error.response?.data || error.message);
+            console.error("Login Failed:", error.response?.data?.message || error.message);
         }
     };
 

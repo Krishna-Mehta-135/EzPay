@@ -5,24 +5,21 @@ import {registerUserSchema} from "../validation/user.validation.js";
 import zod from "zod";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import {Account} from "../models/user.model.js";
-import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async (userId) => {
-    try {
-        const user = await User.findById(userId);
-        if (!user) throw new ApiError(404, "User not found");
-
-        const accessToken = await user.generateAccessToken();
-        const refreshToken = await user.generateRefreshToken();
-
-        user.refreshToken = refreshToken;
-        await user.save({validateBeforeSave: false});
-
-        return {accessToken, refreshToken};
-    } catch (error) {
-        console.error("❌ Token Generation Error:", error);
-        throw new ApiError(500, "Something went wrong while generating tokens");
+    const user = await User.findById(userId);
+    if (!user) {
+        console.log("❌ User not found!");
+        throw new ApiError(404, "User not found");
     }
+
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave: false});
+
+    return {accessToken, refreshToken};
 };
 
 const signup = asyncHandler(async (req, res) => {
@@ -57,11 +54,11 @@ const signup = asyncHandler(async (req, res) => {
         balance: 1 + Math.random() * 10000,
     });
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
 
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true, // Prevents JavaScript access
-        secure: true,   // Works only on HTTPS (set to false in development)
+        secure: true, // Works only on HTTPS (set to false in development)
         sameSite: "Strict", // Helps prevent CSRF attacks
     });
 
@@ -75,7 +72,6 @@ const signup = asyncHandler(async (req, res) => {
         user: createdUser,
         accessToken,
     });
-    
 });
 
 const signin = asyncHandler(async (req, res) => {
@@ -88,27 +84,19 @@ const signin = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password is required to login");
     }
 
-    // Find user by email or username
-    const user = await User.findOne({
-        $or: [{username}, {email}],
-    });
-
-    // If user does not exist
+    // Find user
+    const user = await User.findOne({$or: [{username}, {email}]});
     if (!user) {
         throw new ApiError(400, "Invalid username or email");
     }
 
     // Validate password
-    const isPasswordValid = await user.isPasswordCorrect(password);
-    if (!isPasswordValid) {
+    if (!(await user.isPasswordCorrect(password))) {
         throw new ApiError(400, "Incorrect password");
     }
 
-    // Generate access and refresh tokens
+    // Generate tokens
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
-
-    // Get user details without sensitive fields
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
     // Cookie options
     const isProduction = process.env.NODE_ENV === "production";
@@ -118,17 +106,15 @@ const signin = asyncHandler(async (req, res) => {
         sameSite: "Strict",
     };
 
-    return res
-    .status(200)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(
+    // Store only refreshToken in cookies
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
+    return res.status(200).json(
         new ApiResponse(
             200,
             {
-                user: loggedInUser,
-                accessToken,
-                refreshToken,
+                user: await User.findById(user._id).select("-password -refreshToken"),
+                accessToken, // Access token in response (stored in memory on frontend)
             },
             "User logged in successfully"
         )
