@@ -28,8 +28,11 @@ const Signin = () => {
                 {withCredentials: true} // Ensures cookies are sent and received
             );
 
-            setAccessToken(response.data.data.accessToken); // Store access token in state
+            const accessToken = response.data.data.accessToken;
+            sessionStorage.setItem("accessToken", accessToken); // ✅ Store token in sessionStorage
+
             navigate("/dashboard");
+
         } catch (error) {
             console.error("Login Failed:", error.response?.data?.message || error.message);
         }

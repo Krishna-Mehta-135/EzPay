@@ -1,5 +1,5 @@
-import React, {useState, useEffect} from "react";
-import {Button} from "./Button";
+import React, { useState, useEffect } from "react";
+import { Button } from "./Button";
 import axios from "axios";
 
 const Users = () => {
@@ -8,16 +8,24 @@ const Users = () => {
 
     useEffect(() => {
         const fetchUsers = async () => {
+            const token = sessionStorage.getItem("accessToken");
+    
+            if (!token) {
+                console.error("No access token found");
+                setUsers([]);
+                return;
+            }
+    
             try {
-                const token = localStorage.getItem("token"); // Get token from local storage
                 const response = await axios.get("http://localhost:8000/api/v1/user/bulk", {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Include token in request
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
+                    withCredentials: true
                 });
-                setUsers(response.data.user); // Set fetched users
+    
+                setUsers(response.data.user || []); // ✅ Fix: Correct key
             } catch (error) {
                 console.error("Error fetching users:", error);
+                setUsers([]);
             }
         };
     
@@ -25,7 +33,11 @@ const Users = () => {
     }, []);
     
 
-    const filteredUsers = users.filter((user) => user.name.toLowerCase().includes(filter.toLowerCase()));
+    if (!users) return <div>Loading users...</div>;
+
+    const filteredUsers = users.filter((user) =>
+        user.fullName?.toLowerCase().includes(filter.toLowerCase()) // Use optional chaining
+    );
 
     return (
         <div>
@@ -47,14 +59,14 @@ const Users = () => {
     );
 };
 
-const User = ({user}) => {
+const User = ({ user }) => {
     return (
         <div className="flex justify-between mt-4">
             <div className="flex">
                 <div className="rounded-full h-12 w-12 bg-slate-200 flex justify-center mt-1 mr-2">
-                    <div className="flex flex-col justify-center h-full text-xl">{user.name?.[0] || ""}</div>
+                    <div className="flex flex-col justify-center h-full text-xl">{user.fullName?.[0] || ""}</div>
                 </div>
-                <div className="flex flex-col justify-center h-full">{user.name}</div>
+                <div className="flex flex-col justify-center h-full">{user.fullName}</div>
             </div>
             <div className="flex flex-col justify-center h-full">
                 <Button label={"Send Money"} />
@@ -63,4 +75,4 @@ const User = ({user}) => {
     );
 };
 
-export {Users};
+export { Users };
