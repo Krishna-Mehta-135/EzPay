@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "./Button";
+import React, {useState, useEffect} from "react";
+import {Button} from "./Button";
 import axios from "axios";
+import {useNavigate} from "react-router-dom";
 
 const Users = () => {
     const [users, setUsers] = useState([]);
@@ -9,35 +10,30 @@ const Users = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             const token = sessionStorage.getItem("accessToken");
-    
-            if (!token) {
-                console.error("No access token found");
-                setUsers([]);
-                return;
-            }
-    
+            if (!token) return console.error("No access token found");
+
             try {
                 const response = await axios.get("http://localhost:8000/api/v1/user/bulk", {
-                    headers: { Authorization: `Bearer ${token}` },
-                    withCredentials: true
+                    headers: {Authorization: `Bearer ${token}`},
+                    withCredentials: true,
                 });
-    
-                setUsers(response.data.user || []); // ✅ Fix: Correct key
+
+                setUsers(response.data.user || []);
             } catch (error) {
                 console.error("Error fetching users:", error);
                 setUsers([]);
             }
         };
-    
+
         fetchUsers();
     }, []);
-    
 
-    if (!users) return <div>Loading users...</div>;
+    const handleSendMoney = (receiverId) => {
+    };
 
-    const filteredUsers = users.filter((user) =>
-        user.fullName?.toLowerCase().includes(filter.toLowerCase()) // Use optional chaining
-    );
+    if (!users.length) return <div>Loading users...</div>;
+
+    const filteredUsers = users.filter((user) => user.fullName?.toLowerCase().includes(filter.toLowerCase()));
 
     return (
         <div>
@@ -52,14 +48,15 @@ const Users = () => {
             </div>
             <div>
                 {filteredUsers.map((user) => (
-                    <User key={user._id} user={user} />
+                    <User key={user._id} user={user} onSendMoney={handleSendMoney} />
                 ))}
             </div>
         </div>
     );
 };
 
-const User = ({ user }) => {
+const User = ({user, onSendMoney}) => {
+    const navigate = useNavigate();
     return (
         <div className="flex justify-between mt-4">
             <div className="flex">
@@ -69,10 +66,11 @@ const User = ({ user }) => {
                 <div className="flex flex-col justify-center h-full">{user.fullName}</div>
             </div>
             <div className="flex flex-col justify-center h-full">
-                <Button label={"Send Money"} />
+            <Button onClick={() => navigate("/send", { state: { receiverId: user._id, name: user.fullName } })} label={"Send Money"} />
+
             </div>
         </div>
     );
 };
 
-export { Users };
+export {Users};
