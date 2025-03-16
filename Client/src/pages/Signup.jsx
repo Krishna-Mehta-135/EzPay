@@ -40,7 +40,7 @@ const Signup = () => {
                     <InputBox onChange={(e) => setUsername(e.target.value)} placeholder="Johnisgreat" label={"Username"} />
                     <InputBox onChange={(e) => setEmail(e.target.value)} placeholder="JohnDoe@gmail.com" label={"Email"} />
                     <InputBox onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" label={"Full Name"} />
-                    <InputBox onChange={(e) => setPassword(e.target.value)} placeholder="123456" label={"Password"} />
+                    <InputBox onChange={(e) => setPassword(e.target.value)} placeholder="12345678" label={"Password"} />
                 </div>
                 
                 {/* Attach onClick directly to Button */}
