@@ -21,7 +21,7 @@ const Landing = () => {
                         to="features"
                         smooth={true}
                         duration={500}
-                        className="cursor-pointer text-gray-600 hover:text-blue-600"
+                        className="cursor-pointer mt-2 text-gray-600 hover:text-blue-600"
                     >
                         Features
                     </ScrollLink>
@@ -29,7 +29,7 @@ const Landing = () => {
                         to="how-it-works"
                         smooth={true}
                         duration={500}
-                        className="cursor-pointer text-gray-600 hover:text-blue-600"
+                        className="cursor-pointer mt-2 text-gray-600 hover:text-blue-600"
                     >
                         How It Works
                     </ScrollLink>
